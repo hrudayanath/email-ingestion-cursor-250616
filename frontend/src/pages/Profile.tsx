@@ -36,7 +36,7 @@ export default function Profile() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
@@ -48,7 +48,7 @@ export default function Profile() {
     try {
       // TODO: Implement profile update API call
       // For now, just simulate a successful update
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 1000));
       setSuccess('Profile updated successfully');
       setIsEditing(false);
     } catch (err) {
@@ -73,9 +73,9 @@ export default function Profile() {
     try {
       // TODO: Implement password change API call
       // For now, just simulate a successful update
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 1000));
       setSuccess('Password changed successfully');
-      setFormData((prev) => ({
+      setFormData(prev => ({
         ...prev,
         currentPassword: '',
         newPassword: '',
@@ -95,7 +95,7 @@ export default function Profile() {
     try {
       // TODO: Implement account deletion API call
       // For now, just simulate a successful deletion
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 1000));
       logout();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete account');
@@ -110,11 +110,7 @@ export default function Profile() {
       <Box sx={{ mt: 4, mb: 4 }}>
         <Paper sx={{ p: 4 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
-            <Avatar
-              src={user?.picture}
-              alt={user?.name}
-              sx={{ width: 100, height: 100, mr: 3 }}
-            />
+            <Avatar src={user?.picture} alt={user?.name} sx={{ width: 100, height: 100, mr: 3 }} />
             <Box>
               <Typography variant="h4" gutterBottom>
                 {user?.name}
@@ -169,12 +165,7 @@ export default function Profile() {
             <Box sx={{ mt: 2 }}>
               {isEditing ? (
                 <>
-                  <Button
-                    type="submit"
-                    variant="contained"
-                    disabled={isLoading}
-                    sx={{ mr: 1 }}
-                  >
+                  <Button type="submit" variant="contained" disabled={isLoading} sx={{ mr: 1 }}>
                     {isLoading ? <CircularProgress size={24} /> : 'Save Changes'}
                   </Button>
                   <Button
@@ -186,11 +177,7 @@ export default function Profile() {
                   </Button>
                 </>
               ) : (
-                <Button
-                  variant="outlined"
-                  onClick={() => setIsEditing(true)}
-                  disabled={isLoading}
-                >
+                <Button variant="outlined" onClick={() => setIsEditing(true)} disabled={isLoading}>
                   Edit Profile
                 </Button>
               )}
@@ -240,12 +227,7 @@ export default function Profile() {
               </Grid>
             </Grid>
             <Box sx={{ mt: 2 }}>
-              <Button
-                type="submit"
-                variant="contained"
-                color="primary"
-                disabled={isLoading}
-              >
+              <Button type="submit" variant="contained" color="primary" disabled={isLoading}>
                 {isLoading ? <CircularProgress size={24} /> : 'Change Password'}
               </Button>
             </Box>
@@ -280,15 +262,12 @@ export default function Profile() {
         <DialogTitle>Delete Account</DialogTitle>
         <DialogContent>
           <Typography>
-            Are you sure you want to delete your account? This action cannot be
-            undone and all your data will be permanently deleted.
+            Are you sure you want to delete your account? This action cannot be undone and all your
+            data will be permanently deleted.
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button
-            onClick={() => setShowDeleteDialog(false)}
-            disabled={isLoading}
-          >
+          <Button onClick={() => setShowDeleteDialog(false)} disabled={isLoading}>
             Cancel
           </Button>
           <Button
@@ -303,4 +282,4 @@ export default function Profile() {
       </Dialog>
     </Container>
   );
-} 
+}

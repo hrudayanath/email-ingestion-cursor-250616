@@ -1,11 +1,7 @@
 import axios, { AxiosError } from 'axios';
 
 export class APIError extends Error {
-  constructor(
-    message: string,
-    public status?: number,
-    public code?: string
-  ) {
+  constructor(message: string, public status?: number, public code?: string) {
     super(message);
     this.name = 'APIError';
   }
@@ -15,9 +11,7 @@ export const handleAPIError = (error: unknown): APIError => {
   if (axios.isAxiosError(error)) {
     const axiosError = error as AxiosError<{ message: string; code: string }>;
     const message =
-      axiosError.response?.data?.message ||
-      axiosError.message ||
-      'An unexpected error occurred';
+      axiosError.response?.data?.message || axiosError.message || 'An unexpected error occurred';
     const status = axiosError.response?.status;
     const code = axiosError.response?.data?.code;
 
@@ -33,4 +27,4 @@ export const handleAPIError = (error: unknown): APIError => {
 
 export const isAPIError = (error: unknown): error is APIError => {
   return error instanceof APIError;
-}; 
+};

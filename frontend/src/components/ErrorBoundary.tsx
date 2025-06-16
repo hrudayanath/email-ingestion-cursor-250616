@@ -43,11 +43,7 @@ class ErrorBoundary extends Component<Props, State> {
           <Typography color="text.secondary" paragraph>
             {this.state.error?.message || 'An unexpected error occurred'}
           </Typography>
-          <Button
-            variant="contained"
-            onClick={() => window.location.reload()}
-            sx={{ mt: 2 }}
-          >
+          <Button variant="contained" onClick={() => window.location.reload()} sx={{ mt: 2 }}>
             Reload Page
           </Button>
         </Box>
@@ -58,4 +54,4 @@ class ErrorBoundary extends Component<Props, State> {
   }
 }
 
-export default ErrorBoundary; 
+export default ErrorBoundary;

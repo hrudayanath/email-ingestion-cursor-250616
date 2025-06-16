@@ -11,4 +11,4 @@ export const ENV = getEnvVar('REACT_APP_ENV');
 
 export const isDevelopment = ENV === 'development';
 export const isProduction = ENV === 'production';
-export const isTest = ENV === 'test'; 
+export const isTest = ENV === 'test';

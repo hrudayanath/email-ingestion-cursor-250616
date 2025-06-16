@@ -12,10 +12,7 @@ import {
   CircularProgress,
   Link,
 } from '@mui/material';
-import {
-  Google as GoogleIcon,
-  Microsoft as MicrosoftIcon,
-} from '@mui/icons-material';
+import { Google as GoogleIcon, Microsoft as MicrosoftIcon } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../api/client';
 
@@ -33,7 +30,7 @@ export default function Register() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const validateForm = () => {
@@ -236,4 +233,4 @@ export default function Register() {
       </Box>
     </Container>
   );
-} 
+}

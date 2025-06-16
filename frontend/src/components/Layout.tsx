@@ -73,7 +73,7 @@ export default function Layout() {
       </Toolbar>
       <Divider />
       <List>
-        {menuItems.map((item) => (
+        {menuItems.map(item => (
           <ListItem
             button
             key={item.text}
@@ -116,11 +116,7 @@ export default function Layout() {
             aria-controls="user-menu"
             aria-haspopup="true"
           >
-            <Avatar
-              src={user?.picture}
-              alt={user?.name}
-              sx={{ width: 32, height: 32 }}
-            />
+            <Avatar src={user?.picture} alt={user?.name} sx={{ width: 32, height: 32 }} />
           </IconButton>
           <Menu
             id="user-menu"
@@ -147,10 +143,7 @@ export default function Layout() {
           </Menu>
         </Toolbar>
       </AppBar>
-      <Box
-        component="nav"
-        sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
-      >
+      <Box component="nav" sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}>
         <Drawer
           variant="temporary"
           open={mobileOpen}
@@ -195,4 +188,4 @@ export default function Layout() {
       </Box>
     </Box>
   );
-} 
+}

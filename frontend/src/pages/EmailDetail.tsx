@@ -53,14 +53,7 @@ const EntityList: React.FC<{ entities: NEREntity[] }> = ({ entities }) => {
           <ListItemIcon>{getEntityIcon(entity.type)}</ListItemIcon>
           <ListItemText
             primary={entity.text}
-            secondary={
-              <Chip
-                label={entity.type}
-                size="small"
-                color="primary"
-                variant="outlined"
-              />
-            }
+            secondary={<Chip label={entity.type} size="small" color="primary" variant="outlined" />}
           />
         </ListItem>
       ))}
@@ -138,9 +131,7 @@ const EmailDetail: React.FC = () => {
                 <Typography variant="subtitle2" color="text.secondary">
                   From
                 </Typography>
-                <Typography>
-                  {email.from}
-                </Typography>
+                <Typography>{email.from}</Typography>
               </Box>
               <Box sx={{ mb: 3 }}>
                 <Typography variant="subtitle2" color="text.secondary">
@@ -159,9 +150,7 @@ const EmailDetail: React.FC = () => {
                 <Typography variant="subtitle2" color="text.secondary">
                   Received
                 </Typography>
-                <Typography>
-                  {new Date(email.date).toLocaleString()}
-                </Typography>
+                <Typography>{new Date(email.date).toLocaleString()}</Typography>
               </Box>
               <Divider sx={{ my: 2 }} />
               <Box sx={{ whiteSpace: 'pre-wrap' }}>{email.body}</Box>
@@ -197,4 +186,4 @@ const EmailDetail: React.FC = () => {
   );
 };
 
-export default EmailDetail; 
+export default EmailDetail;

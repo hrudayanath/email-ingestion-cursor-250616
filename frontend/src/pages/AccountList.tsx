@@ -18,11 +18,7 @@ import {
   IconButton,
   Tooltip,
 } from '@mui/material';
-import {
-  Add as AddIcon,
-  Delete as DeleteIcon,
-  Refresh as RefreshIcon,
-} from '@mui/icons-material';
+import { Add as AddIcon, Delete as DeleteIcon, Refresh as RefreshIcon } from '@mui/icons-material';
 import { api, Account } from '../api/client';
 
 const AccountList: React.FC = () => {
@@ -38,7 +34,7 @@ const AccountList: React.FC = () => {
 
   const addAccountMutation = useMutation({
     mutationFn: (provider: 'google' | 'microsoft') => api.addAccount(provider),
-    onSuccess: (data) => {
+    onSuccess: data => {
       if (data.authUrl) {
         window.location.href = data.authUrl;
       }
@@ -78,11 +74,7 @@ const AccountList: React.FC = () => {
         <Typography variant="h4" component="h1">
           Email Accounts
         </Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => setOpen(true)}
-        >
+        <Button variant="contained" startIcon={<AddIcon />} onClick={() => setOpen(true)}>
           Add Account
         </Button>
       </Box>
@@ -152,7 +144,7 @@ const AccountList: React.FC = () => {
             fullWidth
             label="Provider"
             value={provider}
-            onChange={(e) => setProvider(e.target.value as 'google' | 'microsoft')}
+            onChange={e => setProvider(e.target.value as 'google' | 'microsoft')}
             sx={{ mt: 2 }}
           >
             <MenuItem value="google">Gmail</MenuItem>
@@ -174,4 +166,4 @@ const AccountList: React.FC = () => {
   );
 };
 
-export default AccountList; 
+export default AccountList;

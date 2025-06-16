@@ -13,16 +13,8 @@ import {
   IconButton,
   Tooltip,
 } from '@mui/material';
-import {
-  DataGrid,
-  GridColDef,
-  GridRenderCellParams,
-  GridPaginationModel,
-} from '@mui/x-data-grid';
-import {
-  Summarize as SummarizeIcon,
-  Analytics as AnalyticsIcon,
-} from '@mui/icons-material';
+import { DataGrid, GridColDef, GridRenderCellParams, GridPaginationModel } from '@mui/x-data-grid';
+import { Summarize as SummarizeIcon, Analytics as AnalyticsIcon } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { api, Email, EmailListParams } from '../api/client';
 
@@ -114,10 +106,7 @@ const EmailList: React.FC = () => {
       renderCell: (params: GridRenderCellParams<Email>) => (
         <Box>
           <Tooltip title="View Details">
-            <IconButton
-              size="small"
-              onClick={() => navigate(`/emails/${params.row.id}`)}
-            >
+            <IconButton size="small" onClick={() => navigate(`/emails/${params.row.id}`)}>
               <AnalyticsIcon fontSize="small" />
             </IconButton>
           </Tooltip>
@@ -147,7 +136,7 @@ const EmailList: React.FC = () => {
                 fullWidth
                 label="Search"
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={e => setSearch(e.target.value)}
                 placeholder="Search by subject, sender, or content..."
               />
             </Grid>
@@ -157,7 +146,7 @@ const EmailList: React.FC = () => {
                 select
                 label="Provider"
                 value={provider}
-                onChange={(e) => setProvider(e.target.value as 'all' | 'google' | 'microsoft')}
+                onChange={e => setProvider(e.target.value as 'all' | 'google' | 'microsoft')}
               >
                 <MenuItem value="all">All Providers</MenuItem>
                 <MenuItem value="google">Gmail</MenuItem>
@@ -190,4 +179,4 @@ const EmailList: React.FC = () => {
   );
 };
 
-export default EmailList; 
+export default EmailList;

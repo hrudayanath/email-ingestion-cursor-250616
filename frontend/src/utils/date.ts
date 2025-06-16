@@ -43,4 +43,4 @@ export const formatRelativeTime = (date: string | Date): string => {
   }
 
   return formatDate(date);
-}; 
+};

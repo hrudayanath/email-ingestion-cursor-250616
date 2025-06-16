@@ -11,8 +11,8 @@ const client = axios.create({
 
 // Add response interceptor for error handling
 client.interceptors.response.use(
-  (response) => response,
-  (error) => {
+  response => response,
+  error => {
     if (error.response?.status === 401) {
       // Handle unauthorized access
       localStorage.removeItem('user');
@@ -283,4 +283,4 @@ export const api = {
       await client.delete('/profile', { data: { password } });
     },
   },
-}; 
+};

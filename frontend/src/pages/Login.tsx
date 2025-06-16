@@ -16,10 +16,7 @@ import {
   DialogActions,
   Link,
 } from '@mui/material';
-import {
-  Google as GoogleIcon,
-  Microsoft as MicrosoftIcon,
-} from '@mui/icons-material';
+import { Google as GoogleIcon, Microsoft as MicrosoftIcon } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../api/client';
 
@@ -41,7 +38,7 @@ export default function Login() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -231,7 +228,7 @@ export default function Login() {
             type="text"
             fullWidth
             value={otpCode}
-            onChange={(e) => setOtpCode(e.target.value)}
+            onChange={e => setOtpCode(e.target.value)}
             disabled={isLoading}
             inputProps={{
               maxLength: 6,
@@ -255,4 +252,4 @@ export default function Login() {
       </Dialog>
     </Container>
   );
-} 
+}

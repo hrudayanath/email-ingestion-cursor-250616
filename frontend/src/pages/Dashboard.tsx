@@ -1,13 +1,6 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import {
-  Box,
-  Card,
-  CardContent,
-  Grid,
-  Typography,
-  CircularProgress,
-} from '@mui/material';
+import { Box, Card, CardContent, Grid, Typography, CircularProgress } from '@mui/material';
 import {
   Email as EmailIcon,
   AccountCircle as AccountIcon,
@@ -78,8 +71,9 @@ const Dashboard: React.FC = () => {
 
   const totalEmails = emails?.total || 0;
   const totalAccounts = accounts?.length || 0;
-  const summarizedEmails = emails?.emails.filter((e) => e.summary).length || 0;
-  const analyzedEmails = emails?.emails.filter((e) => e.entities && e.entities.length > 0).length || 0;
+  const summarizedEmails = emails?.emails.filter(e => e.summary).length || 0;
+  const analyzedEmails =
+    emails?.emails.filter(e => e.entities && e.entities.length > 0).length || 0;
 
   return (
     <Box>
@@ -88,12 +82,7 @@ const Dashboard: React.FC = () => {
       </Typography>
       <Grid container spacing={3}>
         <Grid item xs={12} sm={6} md={3}>
-          <StatCard
-            title="Total Emails"
-            value={totalEmails}
-            icon={<EmailIcon />}
-            color="#1976d2"
-          />
+          <StatCard title="Total Emails" value={totalEmails} icon={<EmailIcon />} color="#1976d2" />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
           <StatCard
@@ -124,4 +113,4 @@ const Dashboard: React.FC = () => {
   );
 };
 
-export default Dashboard; 
+export default Dashboard;
