@@ -1,120 +1,62 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { api } from '../api/client';
-
-interface User {
-  id: string;
-  email: string;
-  name: string;
-  picture?: string;
-}
+import { User } from '../api/client';
 
 interface AuthContextType {
   user: User | null;
+  token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  loginWithGoogle: () => void;
-  loginWithMicrosoft: () => void;
+  login: (token: string, user: User) => void;
   logout: () => void;
-  error: string | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Default user for development
-const DEFAULT_USER = {
-  email: 'demo@example.com',
-  password: 'demo123',
-};
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const navigate = useNavigate();
 
   useEffect(() => {
-    // Check for stored user session
+    // Check for stored auth data on mount
+    const storedToken = localStorage.getItem('token');
     const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
+
+    if (storedToken && storedUser) {
+      try {
+        setToken(storedToken);
+        setUser(JSON.parse(storedUser));
+      } catch (error) {
+        console.error('Failed to parse stored user data:', error);
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+      }
     }
+
     setIsLoading(false);
   }, []);
 
-  const login = async (email: string, password: string) => {
-    try {
-      setError(null);
-      setIsLoading(true);
-
-      // For development, use the default user
-      if (email === DEFAULT_USER.email && password === DEFAULT_USER.password) {
-        const demoUser: User = {
-          id: '1',
-          email: DEFAULT_USER.email,
-          name: 'Demo User',
-          picture: 'https://via.placeholder.com/150',
-        };
-        setUser(demoUser);
-        localStorage.setItem('user', JSON.stringify(demoUser));
-        navigate('/dashboard');
-        return;
-      }
-
-      // TODO: Implement actual login API call
-      throw new Error('Invalid credentials');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed');
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const loginWithGoogle = async () => {
-    try {
-      setError(null);
-      setIsLoading(true);
-      const response = await api.getAuthURL('google');
-      window.location.href = response.url;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Google login failed');
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const loginWithMicrosoft = async () => {
-    try {
-      setError(null);
-      setIsLoading(true);
-      const response = await api.getAuthURL('microsoft');
-      window.location.href = response.url;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Microsoft login failed');
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
+  const login = (newToken: string, newUser: User) => {
+    setToken(newToken);
+    setUser(newUser);
+    localStorage.setItem('token', newToken);
+    localStorage.setItem('user', JSON.stringify(newUser));
   };
 
   const logout = () => {
+    setToken(null);
     setUser(null);
+    localStorage.removeItem('token');
     localStorage.removeItem('user');
-    navigate('/login');
   };
 
   const value = {
     user,
-    isAuthenticated: !!user,
+    token,
+    isAuthenticated: !!token,
     isLoading,
     login,
-    loginWithGoogle,
-    loginWithMicrosoft,
     logout,
-    error,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

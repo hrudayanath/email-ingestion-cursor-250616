@@ -68,25 +68,25 @@ export interface EmailListResponse {
 }
 
 // User-related interfaces
-interface UserPreferences {
-  theme: 'light' | 'dark';
+export interface UserPreferences {
+  theme: 'light' | 'dark' | 'system';
   emailNotifications: boolean;
   language: string;
 }
 
-interface User {
+export interface User {
   id: string;
   email: string;
   name: string;
   picture?: string;
-  provider: 'local' | 'google' | 'microsoft';
+  provider?: 'local' | 'google' | 'microsoft';
   providerId?: string;
   emailVerified: boolean;
   twoFactorEnabled: boolean;
-  preferences: UserPreferences;
-  lastLogin: string;
+  preferences?: UserPreferences;
   createdAt: string;
   updatedAt: string;
+  lastLogin?: string;
 }
 
 interface UpdateProfileRequest {
@@ -109,6 +109,22 @@ interface RegisterRequest {
   email: string;
   password: string;
   name: string;
+}
+
+export interface AuthResponse {
+  token: string;
+  user: User;
+}
+
+export interface AuthURLResponse {
+  url: string;
+}
+
+export interface EmailListParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+  provider?: 'google' | 'microsoft';
 }
 
 // API functions
@@ -178,13 +194,16 @@ export const api = {
     return response.data;
   },
 
-  listEmails: async (page = 1, limit = 20, accountId?: string) => {
+  listEmails: async ({ page = 1, limit = 20, search, provider }: EmailListParams = {}) => {
     const params = new URLSearchParams({
       page: page.toString(),
       limit: limit.toString(),
     });
-    if (accountId) {
-      params.append('accountId', accountId);
+    if (search) {
+      params.append('search', search);
+    }
+    if (provider) {
+      params.append('provider', provider);
     }
     const response = await client.get<EmailListResponse>(`/emails?${params.toString()}`);
     return response.data;
@@ -207,13 +226,18 @@ export const api = {
 
   // User management
   auth: {
-    register: async (data: RegisterRequest): Promise<{ token: string; user: User }> => {
+    register: async (data: RegisterRequest): Promise<AuthResponse> => {
       const response = await client.post('/auth/register', data);
       return response.data;
     },
 
-    login: async (data: LoginRequest): Promise<{ token: string; user: User }> => {
+    login: async (data: LoginRequest): Promise<AuthResponse> => {
       const response = await client.post('/auth/login', data);
+      return response.data;
+    },
+
+    getAuthURL: async (provider: 'google' | 'microsoft'): Promise<AuthURLResponse> => {
+      const response = await client.get<AuthURLResponse>(`/auth/${provider}/url`);
       return response.data;
     },
 

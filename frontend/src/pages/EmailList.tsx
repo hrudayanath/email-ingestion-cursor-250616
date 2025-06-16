@@ -17,39 +17,46 @@ import {
   DataGrid,
   GridColDef,
   GridRenderCellParams,
-  GridValueGetterParams,
+  GridPaginationModel,
 } from '@mui/x-data-grid';
 import {
   Summarize as SummarizeIcon,
   Analytics as AnalyticsIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import { listEmails, Email } from '../api/client';
+import { api, Email, EmailListParams } from '../api/client';
+
+type GridValueGetterParams = {
+  row: Email;
+  value: any;
+};
 
 const EmailList: React.FC = () => {
   const navigate = useNavigate();
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [search, setSearch] = useState('');
-  const [provider, setProvider] = useState<string>('all');
+  const [provider, setProvider] = useState<'all' | 'google' | 'microsoft'>('all');
 
   const { data, isLoading } = useQuery({
     queryKey: ['emails', page, pageSize, search, provider],
-    queryFn: () =>
-      listEmails({
+    queryFn: () => {
+      const params: EmailListParams = {
         page: page + 1,
         limit: pageSize,
-        search,
+        search: search || undefined,
         provider: provider === 'all' ? undefined : provider,
-      }),
+      };
+      return api.listEmails(params);
+    },
   });
 
-  const columns: GridColDef[] = [
+  const columns: GridColDef<Email>[] = [
     {
       field: 'subject',
       headerName: 'Subject',
       flex: 1,
-      renderCell: (params: GridRenderCellParams) => (
+      renderCell: (params: GridRenderCellParams<Email>) => (
         <Box
           sx={{
             display: 'flex',
@@ -65,7 +72,7 @@ const EmailList: React.FC = () => {
               <SummarizeIcon color="primary" fontSize="small" />
             </Tooltip>
           )}
-          {params.row.entities?.length > 0 && (
+          {params.row.entities && params.row.entities.length > 0 && (
             <Tooltip title="Analyzed">
               <AnalyticsIcon color="secondary" fontSize="small" />
             </Tooltip>
@@ -77,33 +84,34 @@ const EmailList: React.FC = () => {
       field: 'from',
       headerName: 'From',
       flex: 1,
-      valueGetter: (params: GridValueGetterParams) =>
-        params.row.from?.address || params.row.from?.name || '',
+      valueGetter: (params: GridValueGetterParams) => params.row.from,
     },
     {
       field: 'provider',
       headerName: 'Provider',
       width: 120,
-      renderCell: (params: GridRenderCellParams) => (
-        <Chip
-          label={params.value}
-          color={params.value === 'gmail' ? 'primary' : 'secondary'}
-          size="small"
-        />
-      ),
+      renderCell: (params: GridRenderCellParams<Email>) => {
+        const provider = params.row.accountId.split(':')[0] as 'google' | 'microsoft';
+        return (
+          <Chip
+            label={provider === 'google' ? 'Gmail' : 'Outlook'}
+            color={provider === 'google' ? 'primary' : 'secondary'}
+            size="small"
+          />
+        );
+      },
     },
     {
-      field: 'receivedAt',
+      field: 'date',
       headerName: 'Received',
       width: 180,
-      valueGetter: (params: GridValueGetterParams) =>
-        new Date(params.value).toLocaleString(),
+      valueGetter: (params: GridValueGetterParams) => new Date(params.row.date).toLocaleString(),
     },
     {
       field: 'actions',
       headerName: 'Actions',
       width: 100,
-      renderCell: (params: GridRenderCellParams) => (
+      renderCell: (params: GridRenderCellParams<Email>) => (
         <Box>
           <Tooltip title="View Details">
             <IconButton
@@ -149,11 +157,11 @@ const EmailList: React.FC = () => {
                 select
                 label="Provider"
                 value={provider}
-                onChange={(e) => setProvider(e.target.value)}
+                onChange={(e) => setProvider(e.target.value as 'all' | 'google' | 'microsoft')}
               >
                 <MenuItem value="all">All Providers</MenuItem>
-                <MenuItem value="gmail">Gmail</MenuItem>
-                <MenuItem value="outlook">Outlook</MenuItem>
+                <MenuItem value="google">Gmail</MenuItem>
+                <MenuItem value="microsoft">Outlook</MenuItem>
               </TextField>
             </Grid>
           </Grid>
@@ -161,13 +169,13 @@ const EmailList: React.FC = () => {
       </Card>
       <Card>
         <CardContent>
-          <DataGrid
+          <DataGrid<Email>
             rows={data?.emails || []}
             columns={columns}
             rowCount={data?.total || 0}
             pageSizeOptions={[10, 25, 50]}
             paginationModel={{ page, pageSize }}
-            onPaginationModelChange={(model) => {
+            onPaginationModelChange={(model: GridPaginationModel) => {
               setPage(model.page);
               setPageSize(model.pageSize);
             }}

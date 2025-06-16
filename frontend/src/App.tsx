@@ -1,48 +1,44 @@
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
-import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
-import EmailList from './pages/EmailList';
-import EmailDetail from './pages/EmailDetail';
-import AccountList from './pages/AccountList';
 import Layout from './components/Layout';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import Profile from './pages/Profile';
+import Dashboard from './pages/Dashboard';
 import ErrorBoundary from './components/ErrorBoundary';
 import NotFound from './pages/NotFound';
-import Profile from './pages/Profile';
 
-const App: React.FC = () => {
+export default function App() {
   return (
-    <AuthProvider>
-      <ErrorBoundary>
-        <Routes>
-          {/* Public routes */}
-          <Route path="/login" element={<Login />} />
+    <Router>
+      <AuthProvider>
+        <ErrorBoundary>
+          <Routes>
+            {/* Public routes */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
 
-          {/* Protected routes */}
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute>
-                <Layout />
-              </ProtectedRoute>
-            }
-          >
-            <Route index element={<Navigate to="/dashboard" replace />} />
-            <Route path="dashboard" element={<Dashboard />} />
-            <Route path="emails" element={<EmailList />} />
-            <Route path="emails/:id" element={<EmailDetail />} />
-            <Route path="accounts" element={<AccountList />} />
-            <Route path="profile" element={<Profile />} />
-          </Route>
+            {/* Protected routes */}
+            <Route
+              path="/"
+              element={
+                <ProtectedRoute>
+                  <Layout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<Navigate to="/dashboard" replace />} />
+              <Route path="dashboard" element={<Dashboard />} />
+              <Route path="profile" element={<Profile />} />
+            </Route>
 
-          {/* Catch all route */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </ErrorBoundary>
-    </AuthProvider>
+            {/* Catch all route */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </ErrorBoundary>
+      </AuthProvider>
+    </Router>
   );
-};
-
-export default App; 
+} 

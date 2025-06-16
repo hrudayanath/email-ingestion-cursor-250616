@@ -23,29 +23,32 @@ import {
   Delete as DeleteIcon,
   Refresh as RefreshIcon,
 } from '@mui/icons-material';
-import { addAccount, deleteAccount, fetchEmails, Account } from '../api/client';
+import { api, Account } from '../api/client';
 
 const AccountList: React.FC = () => {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
-  const [provider, setProvider] = useState<'gmail' | 'outlook'>('gmail');
+  const [provider, setProvider] = useState<'google' | 'microsoft'>('google');
   const [isFetching, setIsFetching] = useState<string | null>(null);
 
   const { data: accounts, isLoading } = useQuery({
     queryKey: ['accounts'],
-    queryFn: () => Promise.resolve([]), // TODO: Implement getAccounts API
+    queryFn: api.listAccounts,
   });
 
   const addAccountMutation = useMutation({
-    mutationFn: (provider: 'gmail' | 'outlook') => addAccount(provider),
-    onSuccess: () => {
+    mutationFn: (provider: 'google' | 'microsoft') => api.addAccount(provider),
+    onSuccess: (data) => {
+      if (data.authUrl) {
+        window.location.href = data.authUrl;
+      }
       queryClient.invalidateQueries({ queryKey: ['accounts'] });
       setOpen(false);
     },
   });
 
   const deleteAccountMutation = useMutation({
-    mutationFn: (accountId: string) => deleteAccount(accountId),
+    mutationFn: (accountId: string) => api.deleteAccount(accountId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['accounts'] });
     },
@@ -54,7 +57,7 @@ const AccountList: React.FC = () => {
   const handleFetchEmails = async (accountId: string) => {
     setIsFetching(accountId);
     try {
-      await fetchEmails(accountId);
+      await api.fetchEmails(accountId);
       queryClient.invalidateQueries({ queryKey: ['emails'] });
     } finally {
       setIsFetching(null);
@@ -102,13 +105,13 @@ const AccountList: React.FC = () => {
                     </Typography>
                     <Chip
                       label={account.provider}
-                      color={account.provider === 'gmail' ? 'primary' : 'secondary'}
+                      color={account.provider === 'google' ? 'primary' : 'secondary'}
                       size="small"
                       sx={{ mr: 1 }}
                     />
                     <Chip
-                      label={account.status}
-                      color={account.status === 'active' ? 'success' : 'error'}
+                      label={account.isActive ? 'active' : 'inactive'}
+                      color={account.isActive ? 'success' : 'error'}
                       size="small"
                     />
                   </Box>
@@ -149,11 +152,11 @@ const AccountList: React.FC = () => {
             fullWidth
             label="Provider"
             value={provider}
-            onChange={(e) => setProvider(e.target.value as 'gmail' | 'outlook')}
+            onChange={(e) => setProvider(e.target.value as 'google' | 'microsoft')}
             sx={{ mt: 2 }}
           >
-            <MenuItem value="gmail">Gmail</MenuItem>
-            <MenuItem value="outlook">Outlook</MenuItem>
+            <MenuItem value="google">Gmail</MenuItem>
+            <MenuItem value="microsoft">Outlook</MenuItem>
           </TextField>
         </DialogContent>
         <DialogActions>

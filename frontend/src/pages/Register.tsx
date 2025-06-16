@@ -10,10 +10,6 @@ import {
   Divider,
   Alert,
   CircularProgress,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   Link,
 } from '@mui/material';
 import {
@@ -23,7 +19,7 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../api/client';
 
-export default function Login() {
+export default function Register() {
   const navigate = useNavigate();
   const { login } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
@@ -31,71 +27,66 @@ export default function Login() {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
+    confirmPassword: '',
+    name: '',
   });
-  const [show2FADialog, setShow2FADialog] = useState(false);
-  const [otpCode, setOtpCode] = useState('');
-  const [pendingAuth, setPendingAuth] = useState<{
-    email: string;
-    password: string;
-  } | null>(null);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const validateForm = () => {
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match');
+      return false;
+    }
+
+    if (formData.password.length < 8) {
+      setError('Password must be at least 8 characters long');
+      return false;
+    }
+
+    // Add more password validation as needed
+    const hasUpperCase = /[A-Z]/.test(formData.password);
+    const hasLowerCase = /[a-z]/.test(formData.password);
+    const hasNumbers = /\d/.test(formData.password);
+    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(formData.password);
+
+    if (!hasUpperCase || !hasLowerCase || !hasNumbers || !hasSpecialChar) {
+      setError(
+        'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character'
+      );
+      return false;
+    }
+
+    return true;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    if (!validateForm()) {
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      const { token, user } = await api.auth.login({
+      const { token, user } = await api.auth.register({
         email: formData.email,
         password: formData.password,
+        name: formData.name,
       });
-
-      if (user.twoFactorEnabled) {
-        setPendingAuth({ email: formData.email, password: formData.password });
-        setShow2FADialog(true);
-        setIsLoading(false);
-        return;
-      }
 
       login(token, user);
       navigate('/dashboard', { replace: true });
     } catch (err: any) {
-      if (err.response?.status === 401) {
-        setError('Invalid email or password');
+      if (err.response?.status === 409) {
+        setError('Email already exists');
       } else {
-        setError(err.response?.data?.message || 'An error occurred during login');
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handle2FASubmit = async () => {
-    if (!pendingAuth) return;
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const { token, user } = await api.auth.login({
-        email: pendingAuth.email,
-        password: pendingAuth.password,
-        otpCode,
-      });
-
-      login(token, user);
-      setShow2FADialog(false);
-      navigate('/dashboard', { replace: true });
-    } catch (err: any) {
-      if (err.response?.status === 401) {
-        setError('Invalid OTP code');
-      } else {
-        setError(err.response?.data?.message || 'An error occurred during 2FA verification');
+        setError(err.response?.data?.message || 'An error occurred during registration');
       }
     } finally {
       setIsLoading(false);
@@ -136,7 +127,7 @@ export default function Login() {
           }}
         >
           <Typography component="h1" variant="h5" gutterBottom>
-            Sign In
+            Create an Account
           </Typography>
 
           {error && (
@@ -146,6 +137,19 @@ export default function Login() {
           )}
 
           <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%' }}>
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              id="name"
+              label="Full Name"
+              name="name"
+              autoComplete="name"
+              autoFocus
+              value={formData.name}
+              onChange={handleInputChange}
+              disabled={isLoading}
+            />
             <TextField
               margin="normal"
               required
@@ -167,8 +171,22 @@ export default function Login() {
               label="Password"
               type="password"
               id="password"
-              autoComplete="current-password"
+              autoComplete="new-password"
               value={formData.password}
+              onChange={handleInputChange}
+              disabled={isLoading}
+              helperText="Password must be at least 8 characters long and contain uppercase, lowercase, number, and special character"
+            />
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              name="confirmPassword"
+              label="Confirm Password"
+              type="password"
+              id="confirmPassword"
+              autoComplete="new-password"
+              value={formData.confirmPassword}
               onChange={handleInputChange}
               disabled={isLoading}
             />
@@ -179,7 +197,7 @@ export default function Login() {
               sx={{ mt: 3, mb: 2 }}
               disabled={isLoading}
             >
-              {isLoading ? <CircularProgress size={24} /> : 'Sign In'}
+              {isLoading ? <CircularProgress size={24} /> : 'Sign Up'}
             </Button>
           </Box>
 
@@ -193,7 +211,7 @@ export default function Login() {
               onClick={() => handleOAuthLogin('google')}
               disabled={isLoading}
             >
-              Sign in with Google
+              Sign up with Google
             </Button>
             <Button
               fullWidth
@@ -202,57 +220,20 @@ export default function Login() {
               onClick={() => handleOAuthLogin('microsoft')}
               disabled={isLoading}
             >
-              Sign in with Microsoft
+              Sign up with Microsoft
             </Button>
           </Box>
 
           <Box sx={{ mt: 3, textAlign: 'center' }}>
             <Typography variant="body2" color="text.secondary">
-              Don't have an account?{' '}
-              <Link component={RouterLink} to="/register" variant="body2">
-                Sign up
+              Already have an account?{' '}
+              <Link component={RouterLink} to="/login" variant="body2">
+                Sign in
               </Link>
             </Typography>
           </Box>
         </Paper>
       </Box>
-
-      {/* 2FA Dialog */}
-      <Dialog open={show2FADialog} onClose={() => !isLoading && setShow2FADialog(false)}>
-        <DialogTitle>Two-Factor Authentication</DialogTitle>
-        <DialogContent>
-          <Typography variant="body2" sx={{ mb: 2 }}>
-            Please enter the 6-digit code from your authenticator app.
-          </Typography>
-          <TextField
-            autoFocus
-            margin="dense"
-            label="Authentication Code"
-            type="text"
-            fullWidth
-            value={otpCode}
-            onChange={(e) => setOtpCode(e.target.value)}
-            disabled={isLoading}
-            inputProps={{
-              maxLength: 6,
-              pattern: '[0-9]*',
-            }}
-          />
-          {error && (
-            <Alert severity="error" sx={{ mt: 2 }}>
-              {error}
-            </Alert>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setShow2FADialog(false)} disabled={isLoading}>
-            Cancel
-          </Button>
-          <Button onClick={handle2FASubmit} disabled={isLoading || otpCode.length !== 6}>
-            {isLoading ? <CircularProgress size={24} /> : 'Verify'}
-          </Button>
-        </DialogActions>
-      </Dialog>
     </Container>
   );
 } 

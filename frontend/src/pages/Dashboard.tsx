@@ -14,7 +14,7 @@ import {
   Summarize as SummarizeIcon,
   Analytics as AnalyticsIcon,
 } from '@mui/icons-material';
-import { listEmails } from '../api/client';
+import { api, EmailListParams } from '../api/client';
 
 const StatCard: React.FC<{
   title: string;
@@ -52,12 +52,23 @@ const StatCard: React.FC<{
 );
 
 const Dashboard: React.FC = () => {
-  const { data: emails, isLoading } = useQuery({
-    queryKey: ['emails'],
-    queryFn: () => listEmails({ page: 1, limit: 1 }),
+  const { data: emails, isLoading: emailsLoading } = useQuery({
+    queryKey: ['emails', 'dashboard'],
+    queryFn: () => {
+      const params: EmailListParams = {
+        page: 1,
+        limit: 1,
+      };
+      return api.listEmails(params);
+    },
   });
 
-  if (isLoading) {
+  const { data: accounts, isLoading: accountsLoading } = useQuery({
+    queryKey: ['accounts'],
+    queryFn: api.listAccounts,
+  });
+
+  if (emailsLoading || accountsLoading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
         <CircularProgress />
@@ -66,9 +77,9 @@ const Dashboard: React.FC = () => {
   }
 
   const totalEmails = emails?.total || 0;
-  const totalAccounts = 2; // TODO: Get from API
+  const totalAccounts = accounts?.length || 0;
   const summarizedEmails = emails?.emails.filter((e) => e.summary).length || 0;
-  const analyzedEmails = emails?.emails.filter((e) => e.entities?.length > 0).length || 0;
+  const analyzedEmails = emails?.emails.filter((e) => e.entities && e.entities.length > 0).length || 0;
 
   return (
     <Box>

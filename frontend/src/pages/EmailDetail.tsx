@@ -26,7 +26,7 @@ import {
   Event as EventIcon,
   AttachMoney as MoneyIcon,
 } from '@mui/icons-material';
-import { getEmail, summarizeEmail, performNER, Email, NEREntity } from '../api/client';
+import { api, Email, NEREntity } from '../api/client';
 
 const EntityList: React.FC<{ entities: NEREntity[] }> = ({ entities }) => {
   const getEntityIcon = (type: string) => {
@@ -74,18 +74,19 @@ const EmailDetail: React.FC = () => {
 
   const { data: email, isLoading } = useQuery({
     queryKey: ['email', id],
-    queryFn: () => getEmail(id!),
+    queryFn: () => api.getEmail(id!),
+    enabled: !!id,
   });
 
   const summarizeMutation = useMutation({
-    mutationFn: () => summarizeEmail(id!),
+    mutationFn: () => api.summarizeEmail(id!),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['email', id] });
     },
   });
 
   const analyzeMutation = useMutation({
-    mutationFn: () => performNER(id!),
+    mutationFn: () => api.performNER(id!),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['email', id] });
     },
@@ -138,7 +139,7 @@ const EmailDetail: React.FC = () => {
                   From
                 </Typography>
                 <Typography>
-                  {email.from?.name} &lt;{email.from?.address}&gt;
+                  {email.from}
                 </Typography>
               </Box>
               <Box sx={{ mb: 3 }}>
@@ -146,9 +147,9 @@ const EmailDetail: React.FC = () => {
                   To
                 </Typography>
                 <Typography>
-                  {email.to?.map((recipient) => (
-                    <span key={recipient.address}>
-                      {recipient.name} &lt;{recipient.address}&gt;
+                  {email.to.map((recipient, index) => (
+                    <span key={index}>
+                      {recipient}
                       <br />
                     </span>
                   ))}
@@ -159,11 +160,11 @@ const EmailDetail: React.FC = () => {
                   Received
                 </Typography>
                 <Typography>
-                  {new Date(email.receivedAt).toLocaleString()}
+                  {new Date(email.date).toLocaleString()}
                 </Typography>
               </Box>
               <Divider sx={{ my: 2 }} />
-              <Box sx={{ whiteSpace: 'pre-wrap' }}>{email.content}</Box>
+              <Box sx={{ whiteSpace: 'pre-wrap' }}>{email.body}</Box>
             </CardContent>
           </Card>
         </Grid>
