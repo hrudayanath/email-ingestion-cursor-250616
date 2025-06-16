@@ -2,47 +2,61 @@ import axios from 'axios';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
 
-export const apiClient = axios.create({
+const client = axios.create({
   baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
+// Add response interceptor for error handling
+client.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Handle unauthorized access
+      localStorage.removeItem('user');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
 // Types
 export interface Account {
   id: string;
-  type: 'gmail' | 'outlook';
+  provider: 'google' | 'microsoft';
   email: string;
+  name: string;
+  picture?: string;
   createdAt: string;
   updatedAt: string;
+  lastSyncAt: string;
+  isActive: boolean;
 }
 
 export interface Email {
   id: string;
   accountId: string;
   messageId: string;
+  subject: string;
   from: string;
   to: string[];
   cc: string[];
   bcc: string[];
-  subject: string;
+  date: string;
   body: string;
-  htmlBody: string;
-  receivedAt: string;
+  summary?: string;
+  entities?: NEREntity[];
   createdAt: string;
   updatedAt: string;
-  labels: string[];
-  summary?: string;
-  nerEntities?: NEREntity[];
 }
 
 export interface NEREntity {
   text: string;
   type: string;
-  startPos: number;
-  endPos: number;
-  confidence: number;
+  start: number;
+  end: number;
 }
 
 export interface EmailListResponse {
@@ -50,47 +64,199 @@ export interface EmailListResponse {
   total: number;
   page: number;
   limit: number;
+  hasMore: boolean;
+}
+
+// User-related interfaces
+interface UserPreferences {
+  theme: 'light' | 'dark';
+  emailNotifications: boolean;
+  language: string;
+}
+
+interface User {
+  id: string;
+  email: string;
+  name: string;
+  picture?: string;
+  provider: 'local' | 'google' | 'microsoft';
+  providerId?: string;
+  emailVerified: boolean;
+  twoFactorEnabled: boolean;
+  preferences: UserPreferences;
+  lastLogin: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface UpdateProfileRequest {
+  name: string;
+  picture?: string;
+}
+
+interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+}
+
+interface LoginRequest {
+  email: string;
+  password: string;
+  otpCode?: string;
+}
+
+interface RegisterRequest {
+  email: string;
+  password: string;
+  name: string;
 }
 
 // API functions
 export const api = {
-  // Account operations
-  addAccount: async (type: 'gmail' | 'outlook'): Promise<{ authUrl: string }> => {
-    const response = await apiClient.post('/accounts', { type });
+  // OAuth methods
+  getAuthURL: async (provider: 'google' | 'microsoft') => {
+    const response = await client.get<{ url: string }>(`/oauth/auth/${provider}`);
     return response.data;
   },
 
-  deleteAccount: async (accountId: string): Promise<void> => {
-    await apiClient.delete(`/accounts/${accountId}`);
+  handleCallback: async (provider: 'google' | 'microsoft', code: string, state: string) => {
+    const response = await client.post<{
+      tokens: {
+        access_token: string;
+        refresh_token: string;
+        expires_at: string;
+        token_type: string;
+      };
+      user_info: {
+        id: string;
+        email: string;
+        name: string;
+        picture?: string;
+      };
+      account: {
+        provider: string;
+        email: string;
+        name: string;
+        picture?: string;
+        access_token: string;
+        refresh_token: string;
+        expires_at: string;
+        token_type: string;
+      };
+    }>(`/oauth/callback/${provider}`, { code, state });
+    return response.data;
   },
 
-  fetchEmails: async (accountId: string): Promise<void> => {
-    await apiClient.get(`/accounts/${accountId}/emails`);
+  refreshToken: async (provider: 'google' | 'microsoft', refreshToken: string) => {
+    const response = await client.post<{
+      access_token: string;
+      refresh_token: string;
+      expires_at: string;
+      token_type: string;
+    }>(`/oauth/refresh/${provider}`, { refresh_token: refreshToken });
+    return response.data;
   },
 
-  // Email operations
-  listEmails: async (page = 1, limit = 20, accountId?: string): Promise<EmailListResponse> => {
+  // Account methods
+  addAccount: async (type: 'google' | 'microsoft') => {
+    const response = await client.post<{ authUrl: string }>('/accounts', { type });
+    return response.data;
+  },
+
+  deleteAccount: async (accountId: string) => {
+    await client.delete(`/accounts/${accountId}`);
+  },
+
+  listAccounts: async () => {
+    const response = await client.get<Account[]>('/accounts');
+    return response.data;
+  },
+
+  // Email methods
+  fetchEmails: async (accountId: string) => {
+    const response = await client.post<{ count: number }>(`/accounts/${accountId}/emails/fetch`);
+    return response.data;
+  },
+
+  listEmails: async (page = 1, limit = 20, accountId?: string) => {
     const params = new URLSearchParams({
       page: page.toString(),
       limit: limit.toString(),
     });
     if (accountId) {
-      params.append('account_id', accountId);
+      params.append('accountId', accountId);
     }
-    const response = await apiClient.get(`/emails?${params.toString()}`);
+    const response = await client.get<EmailListResponse>(`/emails?${params.toString()}`);
     return response.data;
   },
 
-  getEmail: async (emailId: string): Promise<Email> => {
-    const response = await apiClient.get(`/emails/${emailId}`);
+  getEmail: async (emailId: string) => {
+    const response = await client.get<Email>(`/emails/${emailId}`);
     return response.data;
   },
 
-  summarizeEmail: async (emailId: string): Promise<void> => {
-    await apiClient.post(`/emails/${emailId}/summarize`);
+  summarizeEmail: async (emailId: string) => {
+    const response = await client.post<{ summary: string }>(`/emails/${emailId}/summarize`);
+    return response.data;
   },
 
-  performNER: async (emailId: string): Promise<void> => {
-    await apiClient.post(`/emails/${emailId}/ner`);
+  performNER: async (emailId: string) => {
+    const response = await client.post<{ entities: NEREntity[] }>(`/emails/${emailId}/ner`);
+    return response.data;
+  },
+
+  // User management
+  auth: {
+    register: async (data: RegisterRequest): Promise<{ token: string; user: User }> => {
+      const response = await client.post('/auth/register', data);
+      return response.data;
+    },
+
+    login: async (data: LoginRequest): Promise<{ token: string; user: User }> => {
+      const response = await client.post('/auth/login', data);
+      return response.data;
+    },
+
+    logout: () => {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+    },
+  },
+
+  user: {
+    getProfile: async (): Promise<User> => {
+      const response = await client.get('/profile');
+      return response.data;
+    },
+
+    updateProfile: async (data: UpdateProfileRequest): Promise<User> => {
+      const response = await client.put('/profile', data);
+      return response.data;
+    },
+
+    changePassword: async (data: ChangePasswordRequest): Promise<void> => {
+      await client.put('/profile/password', data);
+    },
+
+    enable2FA: async (): Promise<{ secret: string }> => {
+      const response = await client.post('/profile/2fa/enable');
+      return response.data;
+    },
+
+    disable2FA: async (code: string): Promise<void> => {
+      await client.post('/profile/2fa/disable', { code });
+    },
+
+    verify2FA: async (code: string): Promise<void> => {
+      await client.post('/profile/2fa/verify', { code });
+    },
+
+    updatePreferences: async (preferences: UserPreferences): Promise<void> => {
+      await client.put('/profile/preferences', preferences);
+    },
+
+    deleteAccount: async (password?: string): Promise<void> => {
+      await client.delete('/profile', { data: { password } });
+    },
   },
 }; 

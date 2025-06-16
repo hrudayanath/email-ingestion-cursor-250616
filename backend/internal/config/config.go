@@ -35,6 +35,15 @@ type Config struct {
 			ClientID     string
 			ClientSecret string
 			RedirectURL  string
+			Scopes       []string
+		}
+		Microsoft struct {
+			ClientID     string
+			ClientSecret string
+			RedirectURL  string
+			TenantID     string
+			Scopes       []string
+			Authority    string
 		}
 		Outlook struct {
 			ClientID     string
@@ -97,6 +106,24 @@ func Load() (*Config, error) {
 	cfg.OAuth.Google.ClientID = getEnv("GOOGLE_CLIENT_ID", "")
 	cfg.OAuth.Google.ClientSecret = getEnv("GOOGLE_CLIENT_SECRET", "")
 	cfg.OAuth.Google.RedirectURL = getEnv("GOOGLE_REDIRECT_URL", "http://localhost:8080/api/v1/accounts/auth/callback")
+	cfg.OAuth.Google.Scopes = []string{
+		"https://www.googleapis.com/auth/gmail.readonly",
+		"https://www.googleapis.com/auth/userinfo.email",
+		"https://www.googleapis.com/auth/userinfo.profile",
+	}
+
+	cfg.OAuth.Microsoft.ClientID = getEnv("MICROSOFT_CLIENT_ID", "")
+	cfg.OAuth.Microsoft.ClientSecret = getEnv("MICROSOFT_CLIENT_SECRET", "")
+	cfg.OAuth.Microsoft.RedirectURL = getEnv("MICROSOFT_REDIRECT_URL", "http://localhost:8080/api/v1/accounts/auth/callback")
+	cfg.OAuth.Microsoft.TenantID = getEnv("MICROSOFT_TENANT_ID", "common")
+	cfg.OAuth.Microsoft.Authority = fmt.Sprintf("https://login.microsoftonline.com/%s", cfg.OAuth.Microsoft.TenantID)
+	cfg.OAuth.Microsoft.Scopes = []string{
+		"https://outlook.office.com/mail.read",
+		"offline_access",
+		"openid",
+		"profile",
+		"email",
+	}
 
 	cfg.OAuth.Outlook.ClientID = getEnv("OUTLOOK_CLIENT_ID", "")
 	cfg.OAuth.Outlook.ClientSecret = getEnv("OUTLOOK_CLIENT_SECRET", "")
@@ -153,6 +180,17 @@ func (c *Config) validate() error {
 	if c.OAuth.Google.ClientSecret == "" {
 		return fmt.Errorf("GOOGLE_CLIENT_SECRET is required")
 	}
+
+	if c.OAuth.Microsoft.ClientID == "" {
+		return fmt.Errorf("MICROSOFT_CLIENT_ID is required")
+	}
+	if c.OAuth.Microsoft.ClientSecret == "" {
+		return fmt.Errorf("MICROSOFT_CLIENT_SECRET is required")
+	}
+	if c.OAuth.Microsoft.TenantID == "" {
+		return fmt.Errorf("MICROSOFT_TENANT_ID is required")
+	}
+
 	if c.OAuth.Outlook.ClientID == "" {
 		return fmt.Errorf("OUTLOOK_CLIENT_ID is required")
 	}
