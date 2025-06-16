@@ -19,97 +19,96 @@ import {
 import { Google as GoogleIcon, Microsoft as MicrosoftIcon } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../api/client';
+import type { AuthResponse } from '../api/client';
+
+interface LoginFormData {
+  email: string;
+  password: string;
+  otp?: string;
+}
 
 export default function Login() {
   const navigate = useNavigate();
   const { login } = useAuth();
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [formData, setFormData] = useState({
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string>('');
+  const [show2FADialog, setShow2FADialog] = useState(false);
+  const [formData, setFormData] = useState<LoginFormData>({
     email: '',
     password: '',
+    otp: '',
   });
-  const [show2FADialog, setShow2FADialog] = useState(false);
   const [otpCode, setOtpCode] = useState('');
   const [pendingAuth, setPendingAuth] = useState<{
     email: string;
     password: string;
   } | null>(null);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+  const handleError = (error: Error) => {
+    setLoading(false);
+    if (error.message.includes('2FA required')) {
+      setShow2FADialog(true);
+    } else {
+      setError(error.message);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
-    setIsLoading(true);
-
     try {
-      const { token, user } = await api.auth.login({
+      setLoading(true);
+      setError('');
+      const response = await api.auth.login({
         email: formData.email,
         password: formData.password,
+        otp: formData.otp || undefined,
       });
-
-      if (user.twoFactorEnabled) {
-        setPendingAuth({ email: formData.email, password: formData.password });
-        setShow2FADialog(true);
-        setIsLoading(false);
-        return;
-      }
-
-      login(token, user);
-      navigate('/dashboard', { replace: true });
-    } catch (err: any) {
-      if (err.response?.status === 401) {
-        setError('Invalid email or password');
-      } else {
-        setError(err.response?.data?.message || 'An error occurred during login');
-      }
-    } finally {
-      setIsLoading(false);
+      login(response.token, response.user);
+      navigate('/dashboard');
+    } catch (error: unknown) {
+      const err = error as Error;
+      handleError(err);
     }
   };
 
   const handle2FASubmit = async () => {
-    if (!pendingAuth) return;
-
-    setIsLoading(true);
-    setError(null);
+    if (!formData.email || !formData.password) return;
 
     try {
-      const { token, user } = await api.auth.login({
-        email: pendingAuth.email,
-        password: pendingAuth.password,
-        otpCode,
+      setLoading(true);
+      setError('');
+      const response = await api.auth.login({
+        email: formData.email,
+        password: formData.password,
+        otp: otpCode,
       });
-
-      login(token, user);
-      setShow2FADialog(false);
-      navigate('/dashboard', { replace: true });
-    } catch (err: any) {
-      if (err.response?.status === 401) {
-        setError('Invalid OTP code');
-      } else {
-        setError(err.response?.data?.message || 'An error occurred during 2FA verification');
-      }
+      login(response.token, response.user);
+      navigate('/dashboard');
+    } catch (error: unknown) {
+      const err = error as Error;
+      setError(err.message);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
+      setShow2FADialog(false);
+      setOtpCode('');
     }
   };
 
   const handleOAuthLogin = async (provider: 'google' | 'microsoft') => {
-    setError(null);
-    setIsLoading(true);
-
     try {
-      const { url } = await api.auth.getAuthURL(provider);
+      setLoading(true);
+      setError('');
+      const url = await api.auth.getAuthURL(provider);
       window.location.href = url;
-    } catch (err: any) {
-      setError(err.response?.data?.message || `Failed to start ${provider} login`);
-      setIsLoading(false);
+    } catch (error: unknown) {
+      const err = error as Error;
+      handleError(err);
     }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   return (
@@ -137,9 +136,9 @@ export default function Login() {
           </Typography>
 
           {error && (
-            <Alert severity="error" sx={{ width: '100%', mb: 2 }}>
+            <Typography variant="body2" color="error" align="center" sx={{ mt: 2 }}>
               {error}
-            </Alert>
+            </Typography>
           )}
 
           <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%' }}>
@@ -154,7 +153,7 @@ export default function Login() {
               type="email"
               value={formData.email}
               onChange={handleInputChange}
-              disabled={isLoading}
+              disabled={loading}
             />
             <TextField
               margin="normal"
@@ -167,16 +166,16 @@ export default function Login() {
               autoComplete="current-password"
               value={formData.password}
               onChange={handleInputChange}
-              disabled={isLoading}
+              disabled={loading}
             />
             <Button
               type="submit"
               fullWidth
               variant="contained"
               sx={{ mt: 3, mb: 2 }}
-              disabled={isLoading}
+              disabled={loading}
             >
-              {isLoading ? <CircularProgress size={24} /> : 'Sign In'}
+              {loading ? <CircularProgress size={24} /> : 'Sign In'}
             </Button>
           </Box>
 
@@ -188,7 +187,7 @@ export default function Login() {
               variant="outlined"
               startIcon={<GoogleIcon />}
               onClick={() => handleOAuthLogin('google')}
-              disabled={isLoading}
+              disabled={loading}
             >
               Sign in with Google
             </Button>
@@ -197,7 +196,7 @@ export default function Login() {
               variant="outlined"
               startIcon={<MicrosoftIcon />}
               onClick={() => handleOAuthLogin('microsoft')}
-              disabled={isLoading}
+              disabled={loading}
             >
               Sign in with Microsoft
             </Button>
@@ -205,7 +204,7 @@ export default function Login() {
 
           <Box sx={{ mt: 3, textAlign: 'center' }}>
             <Typography variant="body2" color="text.secondary">
-              Don't have an account?{' '}
+              Don&#39;t have an account?{' '}
               <Link component={RouterLink} to="/register" variant="body2">
                 Sign up
               </Link>
@@ -215,7 +214,7 @@ export default function Login() {
       </Box>
 
       {/* 2FA Dialog */}
-      <Dialog open={show2FADialog} onClose={() => !isLoading && setShow2FADialog(false)}>
+      <Dialog open={show2FADialog} onClose={() => !loading && setShow2FADialog(false)}>
         <DialogTitle>Two-Factor Authentication</DialogTitle>
         <DialogContent>
           <Typography variant="body2" sx={{ mb: 2 }}>
@@ -229,7 +228,7 @@ export default function Login() {
             fullWidth
             value={otpCode}
             onChange={e => setOtpCode(e.target.value)}
-            disabled={isLoading}
+            disabled={loading}
             inputProps={{
               maxLength: 6,
               pattern: '[0-9]*',
@@ -242,11 +241,11 @@ export default function Login() {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setShow2FADialog(false)} disabled={isLoading}>
+          <Button onClick={() => setShow2FADialog(false)} disabled={loading}>
             Cancel
           </Button>
-          <Button onClick={handle2FASubmit} disabled={isLoading || otpCode.length !== 6}>
-            {isLoading ? <CircularProgress size={24} /> : 'Verify'}
+          <Button onClick={handle2FASubmit} disabled={loading || otpCode.length !== 6}>
+            {loading ? <CircularProgress size={24} /> : 'Verify'}
           </Button>
         </DialogActions>
       </Dialog>

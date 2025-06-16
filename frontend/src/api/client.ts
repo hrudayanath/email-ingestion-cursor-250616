@@ -102,7 +102,7 @@ interface ChangePasswordRequest {
 interface LoginRequest {
   email: string;
   password: string;
-  otpCode?: string;
+  otp?: string;
 }
 
 interface RegisterRequest {
@@ -227,23 +227,23 @@ export const api = {
   // User management
   auth: {
     register: async (data: RegisterRequest): Promise<AuthResponse> => {
-      const response = await client.post('/auth/register', data);
+      const response = await client.post<AuthResponse>('/auth/register', data);
       return response.data;
     },
 
     login: async (data: LoginRequest): Promise<AuthResponse> => {
-      const response = await client.post('/auth/login', data);
-      return response.data;
-    },
-
-    getAuthURL: async (provider: 'google' | 'microsoft'): Promise<AuthURLResponse> => {
-      const response = await client.get<AuthURLResponse>(`/auth/${provider}/url`);
+      const response = await client.post<AuthResponse>('/auth/login', data);
       return response.data;
     },
 
     logout: () => {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
+    },
+
+    getAuthURL: async (provider: 'google' | 'microsoft'): Promise<string> => {
+      const response = await client.get<AuthURLResponse>(`/auth/oauth/${provider}`);
+      return response.data.url;
     },
   },
 
